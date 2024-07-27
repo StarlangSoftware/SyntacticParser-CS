@@ -7,10 +7,20 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
 {
     public class ProbabilisticContextFreeGrammar : ContextFreeGrammar.ContextFreeGrammar
     {
+        /// <summary>
+        /// Empty constructor for the ContextFreeGrammar class.
+        /// </summary>
         public ProbabilisticContextFreeGrammar()
         {
         }
 
+        /// <summary>
+        /// Constructor for the ProbabilisticContextFreeGrammar class. Reads the rules from the rule file, lexicon rules from
+        /// the dictionary file and sets the minimum frequency parameter.
+        /// </summary>
+        /// <param name="ruleFileName">File name for the rule file.</param>
+        /// <param name="dictionaryFileName">File name for the lexicon file.</param>
+        /// <param name="minCount">Minimum frequency parameter.</param>
         public ProbabilisticContextFreeGrammar(string ruleFileName, string dictionaryFileName, int minCount)
         {
             var br = new StreamReader(ruleFileName);
@@ -33,6 +43,13 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
             this.MinCount = minCount;
         }
 
+        /// <summary>
+        /// Another constructor for the ProbabilisticContextFreeGrammar class. Constructs the lexicon from the leaf nodes of
+        /// the trees in the given treebank. Extracts rules from the non-leaf nodes of the trees in the given treebank. Also
+        /// sets the minimum frequency parameter.
+        /// </summary>
+        /// <param name="treeBank">Treebank containing the constituency trees.</param>
+        /// <param name="minCount">Minimum frequency parameter.</param>
         public ProbabilisticContextFreeGrammar(TreeBank treeBank, int minCount)
         {
             List<Symbol> variables;
@@ -61,6 +78,14 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
             this.MinCount = minCount;
         }
 
+        /// <summary>
+        /// Converts a parse node in a tree to a rule. The symbol in the parse node will be the symbol on the leaf side of the
+        /// rule, the symbols in the child nodes will be the symbols on the right hand side of the rule.
+        /// </summary>
+        /// <param name="parseNode">Parse node for which a rule will be created.</param>
+        /// <param name="trim">If true, the tags will be trimmed. If the symbol's data contains '-' or '=', this method trims all
+        ///             characters after those characters.</param>
+        /// <returns>A new rule constructed from a parse node and its children.</returns>
         public new static ProbabilisticRule ToRule(ParseNode parseNode, bool trim)
         {
             Symbol left;
@@ -92,6 +117,10 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
             return new ProbabilisticRule(left, right);
         }
 
+        /// <summary>
+        /// Recursive method to generate all rules from a subtree rooted at the given node.
+        /// </summary>
+        /// <param name="parseNode">Root node of the subtree.</param>
         private void AddRules(ParseNode parseNode)
         {
             Rule existedRule;
@@ -113,7 +142,7 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
 
             for (var i = 0; i < parseNode.NumberOfChildren(); i++)
             {
-                ParseNode childNode = parseNode.GetChild(i);
+                var childNode = parseNode.GetChild(i);
                 if (childNode.NumberOfChildren() > 0)
                 {
                     AddRules(childNode);
@@ -121,11 +150,16 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
             }
         }
 
+        /// <summary>
+        /// Calculates the probability of a parse node.
+        /// </summary>
+        /// <param name="parseNode">Parse node for which probability is calculated.</param>
+        /// <returns>Probability of a parse node.</returns>
         private double Probability(ParseNode parseNode)
         {
             Rule existedRule;
             ProbabilisticRule rule;
-            double sum = 0.0;
+            var sum = 0.0;
             if (parseNode.NumberOfChildren() > 0)
             {
                 rule = ToRule(parseNode, true);
@@ -144,12 +178,22 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
             return sum;
         }
 
+        /// <summary>
+        /// Calculates the probability of a parse tree.
+        /// </summary>
+        /// <param name="parseTree">Parse tree for which probability is calculated.</param>
+        /// <returns>Probability of the parse tree.</returns>
         public double Probability(ParseTree.ParseTree parseTree)
         {
             return Probability(parseTree.GetRoot());
         }
 
-
+        /// <summary>
+        /// In conversion to Chomsky Normal Form, rules like X -> Y are removed and new rules for every rule as Y -> beta are
+        /// replaced with X -> beta. The method first identifies all X -> Y rules. For every such rule, all rules Y -> beta
+        /// are identified. For every such rule, the method adds a new rule X -> beta. Every Y -> beta rule is then deleted.
+        /// The method also calculates the probability of the new rules based on the previous rules.
+        /// </summary>
         private void RemoveSingleNonTerminalFromRightHandSide()
         {
             List<Symbol> nonTerminalList;
@@ -176,10 +220,15 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
             }
         }
 
+        /// <summary>
+        /// In conversion to Chomsky Normal Form, rules like A -> BC... are replaced with A -> X1... and X1 -> BC. This
+        /// method determines such rules and for every such rule, it adds new rule X1->BC and updates rule A->BC to A->X1.
+        /// The method sets the probability of the rules X1->BC to 1, and calculates the probability of the rules A -> X1...
+        /// </summary>
         private void UpdateMultipleNonTerminalFromRightHandSide()
         {
             Rule updateCandidate;
-            int newVariableCount = 0;
+            var newVariableCount = 0;
             updateCandidate = GetMultipleNonTerminalCandidateToUpdate();
             while (updateCandidate != null)
             {
@@ -195,6 +244,11 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
             }
         }
 
+        /// <summary>
+        /// The method converts the grammar into Chomsky normal form. First, rules like X -> Y are removed and new rules for
+        /// every rule as Y -> beta are replaced with X -> beta. Second, rules like A -> BC... are replaced with A -> X1...
+        /// and X1 -> BC.
+        /// </summary>
         public new void ConvertToChomskyNormalForm()
         {
             RemoveSingleNonTerminalFromRightHandSide();

@@ -10,6 +10,13 @@ namespace SyntacticParser.ProbabilisticContextFreeGrammar
 {
     public class ProbabilisticCYKParser : ProbabilisticParser.ProbabilisticParser
     {
+        /// <summary>
+        /// Constructs an array of most probable parse trees for a given sentence according to the given grammar. CYK parser
+        /// is based on a dynamic programming algorithm.
+        /// </summary>
+        /// <param name="pCfg">Probabilistic context free grammar used in parsing.</param>
+        /// <param name="sentence">Sentence to be parsed.</param>
+        /// <returns>List of most probable parse trees for the given sentence.</returns>
         public List<ParseTree.ParseTree> Parse(ProbabilisticContextFreeGrammar pCfg, Sentence sentence)
         {
             int i, j, k, x, y;

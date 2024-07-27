@@ -8,6 +8,13 @@ namespace SyntacticParser.SyntacticParser
 {
     public class CYKParser : SyntacticParser
     {
+        /// <summary>
+        /// Constructs an array of possible parse trees for a given sentence according to the given grammar. CYK parser
+        /// is based on a dynamic programming algorithm.
+        /// </summary>
+        /// <param name="cfg">Context free grammar used in parsing.</param>
+        /// <param name="sentence">Sentence to be parsed.</param>
+        /// <returns>Array list of possible parse trees for the given sentence.</returns>
         public List<ParseTree.ParseTree> Parse(ContextFreeGrammar.ContextFreeGrammar cfg, Sentence sentence)
         {
             int i, j, k, x, y;
@@ -15,7 +22,7 @@ namespace SyntacticParser.SyntacticParser
             ParseNode leftNode, rightNode;
             List<Rule> candidates;
             var parseTrees = new List<ParseTree.ParseTree>();
-            Sentence backUp = new Sentence();
+            var backUp = new Sentence();
             for (i = 0; i < sentence.WordCount(); i++)
             {
                 backUp.AddWord(new Word(sentence.GetWord(i).GetName()));
